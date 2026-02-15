@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings        UserSettings?
+  foodEntries     FoodEntry[]
+  exerciseEntries ExerciseEntry[]
+  weightEntries   WeightEntry[]
+  digests         Digest[]
+  streak          Streak?
+}
+
+model UserSettings {
+  id                 String  @id @default(cuid())
+  userId             String  @unique
+  user               User    @relation(fields: [userId], references: [id])
+  calorieGoal        Int     @default(2000)
+  proteinTarget      Float   @default(150)
+  carbTarget         Float   @default(250)
+  fatTarget          Float   @default(65)
+  macroUnit          String  @default("grams")
+  weightUnit         String  @default("lbs")
+  activityLevel      String  @default("moderate")
+  llmProvider        String  @default("claude")
+  foodLoggingMode    String  @default("fast")
+  onboardingComplete Boolean @default(false)
+  welcomeMessage     String?
+  emptyStateMessage  String?
+}
+
+model FoodEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  date        DateTime @default(now())
+  mealType    String
+  foodName    String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  entryMethod String
+  isEstimate  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model ExerciseEntry {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  date              DateTime @default(now())
+  activity          String
+  durationMinutes   Int
+  estimatedCalories Float
+  isEstimate        Boolean  @default(true)
+  notes             String?
+  createdAt         DateTime @default(now())
+}
+
+model WeightEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @default(now())
+  weight    Float
+  unit      String
+  createdAt DateTime @default(now())
+}
+
+model Digest {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  date        DateTime
+  type        String
+  content     String
+  generatedAt DateTime @default(now())
+}
+
+model Streak {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastLoggedDate DateTime?
+}
