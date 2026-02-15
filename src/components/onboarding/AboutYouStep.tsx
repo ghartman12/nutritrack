@@ -1,8 +1,9 @@
 "use client";
+import Input from "@/components/ui/Input";
 
 interface AboutYouStepProps {
-  data: { weightUnit: string; activityLevel: string };
-  onChange: (field: string, value: string) => void;
+  data: { weightUnit: string; weight: number; activityLevel: string };
+  onChange: (field: string, value: string | number) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -37,6 +38,16 @@ export default function AboutYouStep({ data, onChange, onNext, onBack }: AboutYo
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-6">
+        <Input
+          label={`Current Weight (${data.weightUnit})`}
+          type="number"
+          value={data.weight || ""}
+          onChange={(e) => onChange("weight", parseInt(e.target.value) || 0)}
+          placeholder={data.weightUnit === "lbs" ? "170" : "77"}
+        />
       </div>
 
       <div>

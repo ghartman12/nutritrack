@@ -100,7 +100,17 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-gray-900">8. Changes to Terms</h2>
+            <h2 className="text-base font-semibold text-gray-900">8. Goal Calculations</h2>
+            <p>
+              Goal calculations use standard population-based formulas (Mifflin-St Jeor) and are
+              estimates only. Individual needs vary based on metabolism, body composition, medical
+              conditions, and other factors. This is not medical advice. Always consult a qualified
+              healthcare professional before making significant dietary changes.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-gray-900">9. Changes to Terms</h2>
             <p>
               We reserve the right to modify these Terms of Service at any time. Continued use
               of the application after changes constitutes acceptance of the updated terms.

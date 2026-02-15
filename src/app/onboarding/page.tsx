@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/PageContainer";
 import WelcomeStep from "@/components/onboarding/WelcomeStep";
-import GoalsStep from "@/components/onboarding/GoalsStep";
 import AboutYouStep from "@/components/onboarding/AboutYouStep";
+import BodyStatsStep from "@/components/onboarding/BodyStatsStep";
+import GoalsStep from "@/components/onboarding/GoalsStep";
 import DisclaimerStep from "@/components/onboarding/DisclaimerStep";
 import ReadyStep from "@/components/onboarding/ReadyStep";
 
@@ -19,7 +20,15 @@ export default function OnboardingPage() {
     carbTarget: 250,
     fatTarget: 65,
     weightUnit: "lbs",
+    weight: 0,
     activityLevel: "moderate",
+    age: 0,
+    sex: "other",
+    heightFeet: 5,
+    heightInches: 10,
+    heightCm: 178,
+    goal: "maintain",
+    weeklyRate: 1,
   });
 
   const updateField = (field: string, value: string | number) => {
@@ -49,9 +58,9 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   };
 
-  // When moving to step 4 (ReadyStep), trigger the API call
+  // When moving to step 5 (ReadyStep), trigger the API call
   const goToReady = () => {
-    setStep(4);
+    setStep(5);
     handleSubmit();
   };
 
@@ -59,7 +68,7 @@ export default function OnboardingPage() {
     <PageContainer>
       {/* Progress dots */}
       <div className="flex justify-center gap-2 pt-8 mb-4">
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
             className={`h-2 rounded-full transition-all ${
@@ -71,7 +80,7 @@ export default function OnboardingPage() {
 
       {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
       {step === 1 && (
-        <GoalsStep
+        <AboutYouStep
           data={data}
           onChange={updateField}
           onNext={() => setStep(2)}
@@ -79,7 +88,7 @@ export default function OnboardingPage() {
         />
       )}
       {step === 2 && (
-        <AboutYouStep
+        <BodyStatsStep
           data={data}
           onChange={updateField}
           onNext={() => setStep(3)}
@@ -87,17 +96,26 @@ export default function OnboardingPage() {
         />
       )}
       {step === 3 && (
-        <DisclaimerStep
-          onNext={goToReady}
+        <GoalsStep
+          data={data}
+          bodyStats={data}
+          onChange={updateField}
+          onNext={() => setStep(4)}
           onBack={() => setStep(2)}
         />
       )}
       {step === 4 && (
+        <DisclaimerStep
+          onNext={goToReady}
+          onBack={() => setStep(3)}
+        />
+      )}
+      {step === 5 && (
         <ReadyStep
           welcomeMessage={welcomeMessage}
           loading={loading}
           onFinish={handleFinish}
-          onBack={() => setStep(3)}
+          onBack={() => setStep(4)}
         />
       )}
     </PageContainer>
