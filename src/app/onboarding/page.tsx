@@ -12,6 +12,7 @@ import ReadyStep from "@/components/onboarding/ReadyStep";
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [goalsMode, setGoalsMode] = useState<"calculate" | "manual">("calculate");
   const [loading, setLoading] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   const [data, setData] = useState({
@@ -91,8 +92,9 @@ export default function OnboardingPage() {
         <BodyStatsStep
           data={data}
           onChange={updateField}
-          onNext={() => setStep(3)}
+          onNext={() => { setGoalsMode("calculate"); setStep(3); }}
           onBack={() => setStep(1)}
+          onSkip={() => { setGoalsMode("manual"); setStep(3); }}
         />
       )}
       {step === 3 && (
@@ -102,6 +104,7 @@ export default function OnboardingPage() {
           onChange={updateField}
           onNext={() => setStep(4)}
           onBack={() => setStep(2)}
+          initialMode={goalsMode}
         />
       )}
       {step === 4 && (

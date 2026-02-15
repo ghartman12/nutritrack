@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Input from "@/components/ui/Input";
 
 interface BodyStatsStepProps {
@@ -15,6 +16,7 @@ interface BodyStatsStepProps {
   onChange: (field: string, value: string | number) => void;
   onNext: () => void;
   onBack: () => void;
+  onSkip?: () => void;
 }
 
 const goals = [
@@ -23,8 +25,26 @@ const goals = [
   { value: "gain", label: "Gain Muscle", icon: "💪" },
 ];
 
-export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodyStatsStepProps) {
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {children} <span className="text-red-400">*</span>
+    </label>
+  );
+}
+
+export default function BodyStatsStep({ data, onChange, onNext, onBack, onSkip }: BodyStatsStepProps) {
   const isImperial = data.weightUnit === "lbs";
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const needsRate = data.goal === "lose" || data.goal === "gain";
+
+  const isComplete =
+    data.age > 0 &&
+    data.sex !== "" &&
+    (isImperial ? data.heightFeet > 0 : data.heightCm > 0) &&
+    data.goal !== "" &&
+    (!needsRate || data.weeklyRate > 0);
 
   const rateOptions = isImperial
     ? [
@@ -38,6 +58,42 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodySt
         { value: 0.7, label: "0.7 kg/week" },
       ];
 
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (data.age < 13 || data.age > 120) {
+      newErrors.age = "Please enter a realistic age between 13-120";
+    }
+
+    if (isImperial) {
+      if (data.heightFeet < 3 || data.heightFeet > 8) {
+        newErrors.heightFeet = "Feet must be between 3-8";
+      }
+      if (data.heightInches < 0 || data.heightInches > 11) {
+        newErrors.heightInches = "Inches must be between 0-11";
+      }
+    } else {
+      if (data.heightCm < 100 || data.heightCm > 250) {
+        newErrors.heightCm = "Please enter a realistic height between 100-250 cm";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validate()) onNext();
+  };
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
   return (
     <div className="px-6 py-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Body Stats</h2>
@@ -45,17 +101,26 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodySt
 
       <div className="space-y-6">
         {/* Age */}
-        <Input
-          label="Age"
-          type="number"
-          value={data.age || ""}
-          onChange={(e) => onChange("age", parseInt(e.target.value) || 0)}
-          placeholder="25"
-        />
+        <div>
+          <RequiredLabel>Age</RequiredLabel>
+          <Input
+            type="number"
+            min={13}
+            max={120}
+            value={data.age || ""}
+            onChange={(e) => {
+              const val = e.target.value.slice(0, 3);
+              onChange("age", parseInt(val) || 0);
+              clearError("age");
+            }}
+            placeholder="25"
+            error={errors.age}
+          />
+        </div>
 
         {/* Sex */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sex</label>
+          <RequiredLabel>Sex</RequiredLabel>
           <div className="flex gap-3">
             {(["male", "female", "other"] as const).map((option) => (
               <button
@@ -75,37 +140,56 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodySt
 
         {/* Height */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Height {isImperial ? "(ft / in)" : "(cm)"}
-          </label>
+          <RequiredLabel>Height {isImperial ? "(ft / in)" : "(cm)"}</RequiredLabel>
           {isImperial ? (
             <div className="flex gap-3">
               <Input
                 type="number"
+                min={3}
+                max={8}
                 value={data.heightFeet || ""}
-                onChange={(e) => onChange("heightFeet", parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value.slice(0, 1);
+                  onChange("heightFeet", parseInt(val) || 0);
+                  clearError("heightFeet");
+                }}
                 placeholder="5"
+                error={errors.heightFeet}
               />
               <Input
                 type="number"
+                min={0}
+                max={11}
                 value={data.heightInches || ""}
-                onChange={(e) => onChange("heightInches", parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value.slice(0, 2);
+                  onChange("heightInches", parseInt(val) || 0);
+                  clearError("heightInches");
+                }}
                 placeholder="10"
+                error={errors.heightInches}
               />
             </div>
           ) : (
             <Input
               type="number"
+              min={100}
+              max={250}
               value={data.heightCm || ""}
-              onChange={(e) => onChange("heightCm", parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const val = e.target.value.slice(0, 3);
+                onChange("heightCm", parseInt(val) || 0);
+                clearError("heightCm");
+              }}
               placeholder="178"
+              error={errors.heightCm}
             />
           )}
         </div>
 
         {/* Goal */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Goal</label>
+          <RequiredLabel>Goal</RequiredLabel>
           <div className="space-y-2">
             {goals.map((g) => (
               <button
@@ -125,9 +209,9 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodySt
         </div>
 
         {/* Weekly Rate - only if goal is not maintain */}
-        {data.goal !== "maintain" && (
+        {needsRate && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Weekly Rate</label>
+            <RequiredLabel>Weekly Rate</RequiredLabel>
             <div className="space-y-2">
               {rateOptions.map((rate) => (
                 <button
@@ -147,11 +231,23 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack }: BodySt
         )}
       </div>
 
+      {onSkip && (
+        <div className="mt-4 text-center">
+          <button onClick={onSkip} className="text-sm text-gray-500 hover:text-gray-700 underline">
+            Skip to manual entry
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-3 mt-8">
         <button onClick={onBack} className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
           Back
         </button>
-        <button onClick={onNext} className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700">
+        <button
+          onClick={handleNext}
+          disabled={!isComplete}
+          className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600"
+        >
           Next
         </button>
       </div>
