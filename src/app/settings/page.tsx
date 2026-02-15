@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/PageContainer";
 import BottomNav from "@/components/layout/BottomNav";
 import SettingsForm from "@/components/settings/SettingsForm";
@@ -10,9 +11,11 @@ import Spinner from "@/components/ui/Spinner";
 import Link from "next/link";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user, loading, refetch } = useUser();
   const { toast, showToast, hideToast } = useToast();
   const [regenerating, setRegenerating] = useState(false);
+  const [resettingOnboarding, setResettingOnboarding] = useState(false);
 
   const handleSave = async (data: any) => {
     const res = await fetch("/api/user", {
@@ -92,6 +95,31 @@ export default function SettingsPage() {
             className="w-full py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 text-sm"
           >
             {regenerating ? "Regenerating..." : "Regenerate Welcome Message"}
+          </button>
+          <button
+            onClick={async () => {
+              setResettingOnboarding(true);
+              try {
+                const res = await fetch("/api/user", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ onboardingComplete: false }),
+                });
+                if (res.ok) {
+                  router.push("/onboarding");
+                } else {
+                  showToast("Failed to reset onboarding.", "error");
+                }
+              } catch {
+                showToast("Failed to reset onboarding.", "error");
+              } finally {
+                setResettingOnboarding(false);
+              }
+            }}
+            disabled={resettingOnboarding}
+            className="w-full py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 text-sm"
+          >
+            {resettingOnboarding ? "Resetting..." : "Reset Onboarding"}
           </button>
           <Link
             href="/terms"
