@@ -1,52 +1,112 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, Component, type ReactNode } from "react";
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
   onClose: () => void;
 }
 
-export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
-  const scannerRef = useRef<HTMLDivElement>(null);
+// Error boundary to catch any unexpected throws from html5-qrcode
+class ScannerErrorBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; onError: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+function ScannerInner({ onScan, onClose }: BarcodeScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState("");
+  const scannerRef = useRef<any>(null);
+  const mountedRef = useRef(true);
+
+  // Stable callback ref to avoid re-triggering the effect
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
 
   useEffect(() => {
-    let scanner: any = null;
+    mountedRef.current = true;
+    let cancelled = false;
 
     async function startScanner() {
+      // html5-qrcode accesses window/document — guard against SSR
+      if (typeof window === "undefined") return;
+
       try {
         const { Html5Qrcode } = await import("html5-qrcode");
-        scanner = new Html5Qrcode("barcode-reader");
+        if (cancelled) return;
+
+        // Ensure DOM element exists before init
+        const el = document.getElementById("barcode-reader");
+        if (!el) {
+          if (mountedRef.current) setError("Scanner could not load. Enter barcode manually below.");
+          return;
+        }
+
+        const scanner = new Html5Qrcode("barcode-reader");
+        scannerRef.current = scanner;
+
         await scanner.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 150 } },
           (decodedText: string) => {
             scanner.stop().catch(() => {});
-            onScan(decodedText);
+            scannerRef.current = null;
+            onScanRef.current(decodedText);
           },
-          () => {}
+          () => {} // ignore scan failures (no barcode in frame)
         );
-      } catch {
-        setError("Camera not available. Enter barcode manually below.");
+      } catch (err: any) {
+        if (cancelled || !mountedRef.current) return;
+
+        // Provide specific messages for common camera errors
+        const msg = err?.message || err?.toString?.() || "";
+        if (msg.includes("NotAllowedError") || msg.includes("Permission")) {
+          setError("Camera permission denied. Please allow camera access in your browser settings, or enter the barcode manually below.");
+        } else if (msg.includes("NotFoundError") || msg.includes("no camera")) {
+          setError("No camera found. Enter barcode manually below.");
+        } else if (msg.includes("NotReadableError") || msg.includes("Could not start")) {
+          setError("Camera is in use by another app. Enter barcode manually below.");
+        } else {
+          setError("Camera not available. Enter barcode manually below.");
+        }
       }
     }
 
     startScanner();
 
     return () => {
-      if (scanner) {
-        scanner.stop().catch(() => {});
+      cancelled = true;
+      mountedRef.current = false;
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+        scannerRef.current = null;
       }
     };
-  }, [onScan]);
+  }, []); // no dependencies — runs once on mount
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (manualCode.trim()) {
-      onScan(manualCode.trim());
+      onScanRef.current(manualCode.trim());
     }
-  };
+  }, [manualCode]);
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center">
@@ -60,7 +120,6 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
 
         <div
           id="barcode-reader"
-          ref={scannerRef}
           className="w-full rounded-xl overflow-hidden mb-3"
           style={{ minHeight: 200 }}
         />
@@ -87,5 +146,33 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         </form>
       </div>
     </div>
+  );
+}
+
+export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+  const [boundaryError, setBoundaryError] = useState(false);
+
+  if (boundaryError) {
+    return (
+      <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center">
+        <div className="bg-white rounded-2xl p-4 w-full max-w-sm mx-4 text-center">
+          <p className="text-sm text-gray-700 mb-3">
+            Barcode scanner failed to load. This can happen on some browsers.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 text-sm"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ScannerErrorBoundary onError={() => setBoundaryError(true)}>
+      <ScannerInner onScan={onScan} onClose={onClose} />
+    </ScannerErrorBoundary>
   );
 }

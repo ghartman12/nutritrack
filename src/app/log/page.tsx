@@ -71,111 +71,51 @@ function LogContent() {
     fetchTodayWeights();
   }, []);
 
-  const foodLoggingMode = user?.settings?.foodLoggingMode || "fast";
-
   const handleSmartInput = async (query: string) => {
     setSearchResults([]);
     setNutritionData(null);
-
-    if (foodLoggingMode === "accurate") {
-      // Accurate mode: USDA search first, fall back to NLP
-      setSearchLoading(true);
-      setSearchQuery(query);
-      setEntryMethod("search");
-
-      try {
-        const res = await fetch(`/api/food/search?q=${encodeURIComponent(query)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.length > 0) {
-            setSearchResults(data);
-            setSearchLoading(false);
-            return;
-          }
-        }
-      } catch {
-        // Fall through to NLP
-      }
-
-      // Fallback to NLP estimate
-      setSearchLoading(false);
-      setNlpLoading(true);
-      setEntryMethod("nlp");
-      try {
-        const res = await fetch("/api/food/nlp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setNutritionData(data);
-        } else {
-          showToast("Could not estimate nutrition. Try manual entry.", "error");
-        }
-      } catch {
-        showToast("Estimation failed. Try manual entry.", "error");
-      } finally {
-        setNlpLoading(false);
-      }
-    } else {
-      // Fast mode (default): NLP variations first, fall back to USDA search
-      setNlpLoading(true);
-      setEntryMethod("nlp");
-      setSearchQuery(query);
-
-      try {
-        const res = await fetch("/api/food/nlp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, variations: true }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setSearchResults(data);
-            setEntryMethod("search");
-            setNlpLoading(false);
-            return;
-          }
-        }
-      } catch {
-        // Fall through to USDA search
-      }
-
-      // Fallback to USDA search
-      setNlpLoading(false);
-      setSearchLoading(true);
-      try {
-        const res = await fetch(`/api/food/search?q=${encodeURIComponent(query)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data);
-          setEntryMethod("search");
-        }
-      } catch {
-        showToast("Search failed. Try manual entry.", "error");
-      } finally {
-        setSearchLoading(false);
-      }
-    }
-  };
-
-  const handleSearchUSDA = async () => {
-    if (!searchQuery) return;
-    setSearchResults([]);
     setSearchLoading(true);
+    setSearchQuery(query);
+    setEntryMethod("search");
+
     try {
-      const res = await fetch(`/api/food/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/food/search?q=${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);
-        setEntryMethod("search");
       }
     } catch {
       showToast("Search failed. Try manual entry.", "error");
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  const handleTryAIEstimate = async () => {
+    if (!searchQuery) return;
+    setNlpLoading(true);
+    try {
+      const res = await fetch("/api/food/nlp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery, variations: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setSearchResults(data);
+          setEntryMethod("search");
+        } else if (data && !Array.isArray(data)) {
+          setNutritionData(data);
+          setEntryMethod("nlp");
+        }
+      } else {
+        showToast("AI estimation failed. Try manual entry.", "error");
+      }
+    } catch {
+      showToast("AI estimation failed. Try manual entry.", "error");
+    } finally {
+      setNlpLoading(false);
     }
   };
 
@@ -438,12 +378,13 @@ function LogContent() {
                   query={searchQuery}
                 />
 
-                {searchResults.length > 0 && searchResults[0].source === "ai" && (
+                {searchResults.length > 0 && searchResults[0].source !== "ai" && (
                   <button
-                    onClick={handleSearchUSDA}
-                    className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                    onClick={handleTryAIEstimate}
+                    disabled={nlpLoading}
+                    className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
                   >
-                    Not what you&apos;re looking for? Search USDA database
+                    {nlpLoading ? "Estimating..." : "Not finding what you need? Try AI estimate"}
                   </button>
                 )}
 

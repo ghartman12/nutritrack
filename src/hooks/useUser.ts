@@ -11,7 +11,6 @@ interface UserSettings {
   weightUnit: string;
   activityLevel: string;
   llmProvider: string;
-  foodLoggingMode: string;
   onboardingComplete: boolean;
   welcomeMessage: string | null;
   emptyStateMessage: string | null;

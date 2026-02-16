@@ -83,7 +83,6 @@ export default function SettingsPage() {
             weightUnit: settings.weightUnit,
             activityLevel: settings.activityLevel,
             llmProvider: settings.llmProvider,
-            foodLoggingMode: settings.foodLoggingMode,
           }}
           onSave={handleSave}
         />

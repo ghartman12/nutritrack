@@ -10,7 +10,6 @@ interface SettingsData {
   weightUnit: string;
   activityLevel: string;
   llmProvider: string;
-  foodLoggingMode: string;
 }
 
 interface SettingsFormProps {
@@ -80,36 +79,6 @@ export default function SettingsForm({ initialData, onSave }: SettingsFormProps)
 
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900">Preferences</h3>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Food Logging Mode</label>
-          <div className="flex gap-3">
-            {[
-              { value: "fast", label: "Fast (AI Estimates)", subtitle: "AI estimates nutrition instantly. Falls back to USDA database if unavailable.", disclaimer: "AI estimates are for informational purposes only and are not medical advice. Consult a healthcare professional for medical nutrition guidance." },
-              { value: "accurate", label: "Accurate (Database)", subtitle: "Searches USDA database for verified data. Falls back to AI if no results." },
-            ].map((mode) => (
-              <button
-                key={mode.value}
-                onClick={() => update("foodLoggingMode", mode.value)}
-                className={`flex-1 py-3 px-3 rounded-xl border-2 text-left transition-colors ${
-                  data.foodLoggingMode === mode.value
-                    ? "border-emerald-600 bg-emerald-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <span className={`block text-sm font-medium ${
-                  data.foodLoggingMode === mode.value ? "text-emerald-700" : "text-gray-600"
-                }`}>
-                  {mode.label}
-                </span>
-                <span className="block text-xs text-gray-500 mt-1">{mode.subtitle}</span>
-                {mode.disclaimer && data.foodLoggingMode === mode.value && (
-                  <span className="block text-xs text-amber-600 mt-1.5">{mode.disclaimer}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Weight Unit</label>

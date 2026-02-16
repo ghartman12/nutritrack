@@ -32,7 +32,6 @@ model UserSettings {
   weightUnit         String  @default("lbs")
   activityLevel      String  @default("moderate")
   llmProvider        String  @default("claude")
-  foodLoggingMode    String  @default("fast")
   onboardingComplete Boolean @default(false)
   welcomeMessage     String?
   emptyStateMessage  String?
