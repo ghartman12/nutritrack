@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     };
 
     async function buildDayLogs(date: Date): Promise<DayLogs> {
-      const [foods, exercises] = await Promise.all([
+      const [foods, exercises, waterEntries] = await Promise.all([
         prisma.foodEntry.findMany({
           where: {
             userId: DEFAULT_USER_ID,
@@ -51,6 +51,12 @@ export async function POST(request: NextRequest) {
           },
         }),
         prisma.exerciseEntry.findMany({
+          where: {
+            userId: DEFAULT_USER_ID,
+            date: { gte: startOfDay(date), lte: endOfDay(date) },
+          },
+        }),
+        prisma.waterEntry.findMany({
           where: {
             userId: DEFAULT_USER_ID,
             date: { gte: startOfDay(date), lte: endOfDay(date) },
@@ -64,6 +70,8 @@ export async function POST(request: NextRequest) {
           date: { gte: startOfDay(date), lte: endOfDay(date) },
         },
       });
+
+      const waterOunces = waterEntries.reduce((sum, w) => sum + w.ounces, 0);
 
       return {
         date: formatDate(date),
@@ -81,6 +89,7 @@ export async function POST(request: NextRequest) {
           estimatedCalories: e.estimatedCalories,
         })),
         weight: weightEntry?.weight,
+        waterOunces: waterOunces > 0 ? waterOunces : undefined,
       };
     }
 
@@ -105,11 +114,18 @@ export async function POST(request: NextRequest) {
     const weightChange =
       weightValues.length >= 2 ? weightValues[0] - weightValues[weightValues.length - 1] : undefined;
 
+    const daysWithWater = days.filter((d) => d.waterOunces !== undefined && d.waterOunces > 0);
+    const averageWaterOz =
+      daysWithWater.length > 0
+        ? Math.round(daysWithWater.reduce((s, d) => s + d.waterOunces!, 0) / daysWithWater.length)
+        : undefined;
+
     const weekLogs: WeekLogs = {
       days,
       averageCalories: Math.round(totalCals / daysWithFood),
       totalExerciseMinutes: totalExMin,
       weightChange,
+      averageWaterOz,
     };
 
     const digestContent = await llm.generateWeeklyDigest(userData, weekLogs);

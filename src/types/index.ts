@@ -19,7 +19,7 @@ export interface FoodSearchResult {
   carbs: number;
   fat: number;
   fiber: number;
-  source: "usda" | "openfoodfacts" | "ai";
+  source: "usda" | "openfoodfacts" | "ai" | "custom";
   fdcId?: number;
   servingSizeGrams?: number;
   householdServingText?: string;
@@ -51,6 +51,7 @@ export interface DayLogs {
     estimatedCalories: number;
   }[];
   weight?: number;
+  waterOunces?: number;
 }
 
 export interface WeekLogs {
@@ -58,6 +59,7 @@ export interface WeekLogs {
   averageCalories: number;
   totalExerciseMinutes: number;
   weightChange?: number;
+  averageWaterOz?: number;
 }
 
 export interface UserData {
