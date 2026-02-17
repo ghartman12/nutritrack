@@ -48,6 +48,30 @@ function ScannerInner({ onScan, onClose }: BarcodeScannerProps) {
       // html5-qrcode accesses window/document — guard against SSR
       if (typeof window === "undefined") return;
 
+      // Pre-check camera permission before loading the library.
+      // When permanently denied, html5-qrcode can throw uncaught errors
+      // internally that crash the page.
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        // Permission granted — release the stream so the library can claim it
+        stream.getTracks().forEach((t) => t.stop());
+      } catch (err: any) {
+        if (cancelled || !mountedRef.current) return;
+        const msg = err?.name || err?.message || "";
+        if (msg.includes("NotAllowedError") || msg.includes("Permission")) {
+          setError("Camera permission denied. Please allow camera access in your browser settings, or enter the barcode manually below.");
+        } else if (msg.includes("NotFoundError")) {
+          setError("No camera found. Enter barcode manually below.");
+        } else if (msg.includes("NotReadableError")) {
+          setError("Camera is in use by another app. Enter barcode manually below.");
+        } else {
+          setError("Camera not available. Enter barcode manually below.");
+        }
+        return;
+      }
+
+      if (cancelled || !mountedRef.current) return;
+
       try {
         const { Html5Qrcode } = await import("html5-qrcode");
         if (cancelled) return;
@@ -74,18 +98,7 @@ function ScannerInner({ onScan, onClose }: BarcodeScannerProps) {
         );
       } catch (err: any) {
         if (cancelled || !mountedRef.current) return;
-
-        // Provide specific messages for common camera errors
-        const msg = err?.message || err?.toString?.() || "";
-        if (msg.includes("NotAllowedError") || msg.includes("Permission")) {
-          setError("Camera permission denied. Please allow camera access in your browser settings, or enter the barcode manually below.");
-        } else if (msg.includes("NotFoundError") || msg.includes("no camera")) {
-          setError("No camera found. Enter barcode manually below.");
-        } else if (msg.includes("NotReadableError") || msg.includes("Could not start")) {
-          setError("Camera is in use by another app. Enter barcode manually below.");
-        } else {
-          setError("Camera not available. Enter barcode manually below.");
-        }
+        setError("Camera not available. Enter barcode manually below.");
       }
     }
 
