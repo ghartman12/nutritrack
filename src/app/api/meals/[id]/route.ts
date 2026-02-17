@@ -1,10 +1,15 @@
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
 
@@ -34,6 +39,11 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -90,9 +100,14 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
 

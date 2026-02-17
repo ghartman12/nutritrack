@@ -8,6 +8,7 @@ import BodyStatsStep from "@/components/onboarding/BodyStatsStep";
 import GoalsStep from "@/components/onboarding/GoalsStep";
 import DisclaimerStep from "@/components/onboarding/DisclaimerStep";
 import ReadyStep from "@/components/onboarding/ReadyStep";
+import { apiFetch } from "@/lib/api";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/onboarding", {
+      const res = await apiFetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

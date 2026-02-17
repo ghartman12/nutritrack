@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import WaterWidget from "@/components/dashboard/WaterWidget";
 import { useUser } from "@/hooks/useUser";
+import { apiFetch } from "@/lib/api";
 
 interface WaterEntryData {
   id: string;
@@ -42,7 +43,7 @@ export default function WaterTab({ date }: WaterTabProps) {
 
   const fetchWater = useCallback(async () => {
     try {
-      const res = await fetch(`/api/water?date=${todayDate}`);
+      const res = await apiFetch(`/api/water?date=${todayDate}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data.entries);
@@ -62,14 +63,14 @@ export default function WaterTab({ date }: WaterTabProps) {
     setTotalOunces(newOunces);
     try {
       if (delta > 0) {
-        await fetch("/api/water", {
+        await apiFetch("/api/water", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ounces: delta, date: todayDate }),
         });
       } else if (entries.length > 0) {
         const mostRecent = entries[entries.length - 1];
-        await fetch(`/api/water/${mostRecent.id}`, { method: "DELETE" });
+        await apiFetch(`/api/water/${mostRecent.id}`, { method: "DELETE" });
       }
       await fetchWater();
     } catch {
@@ -82,7 +83,7 @@ export default function WaterTab({ date }: WaterTabProps) {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/water/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/water/${id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchWater();
       }
@@ -102,7 +103,7 @@ export default function WaterTab({ date }: WaterTabProps) {
     const max = isMetric ? 6000 : 200;
     const clamped = Math.max(min, Math.min(max, val));
     try {
-      await fetch("/api/user", {
+      await apiFetch("/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ waterGoal: clamped }),

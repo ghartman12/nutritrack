@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
+import { apiFetch } from "@/lib/api";
 
 interface ExerciseFormProps {
   onSubmit: (data: { activity: string; durationMinutes: number; estimatedCalories: number; isEstimate: boolean; notes: string }) => void;
@@ -21,7 +22,7 @@ export default function ExerciseForm({ onSubmit, loading }: ExerciseFormProps) {
     if (!activity.trim() || !duration) return;
     setEstimating(true);
     try {
-      const res = await fetch("/api/exercise/estimate", {
+      const res = await apiFetch("/api/exercise/estimate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

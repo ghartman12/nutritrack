@@ -11,6 +11,7 @@ import TodayLogSummary from "@/components/dashboard/TodayLogSummary";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
+import { apiFetch } from "@/lib/api";
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
@@ -27,10 +28,10 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     const date = todayStr();
     const [foodRes, exRes, weightRes, streakRes] = await Promise.all([
-      fetch(`/api/food?date=${date}`),
-      fetch(`/api/exercise?date=${date}`),
-      fetch(`/api/weight?date=${date}`),
-      fetch("/api/streak"),
+      apiFetch(`/api/food?date=${date}`),
+      apiFetch(`/api/exercise?date=${date}`),
+      apiFetch(`/api/weight?date=${date}`),
+      apiFetch("/api/streak"),
     ]);
 
     if (foodRes.ok) setFoods(await foodRes.json());
@@ -54,7 +55,7 @@ export default function DashboardPage() {
   }, [showToast]);
 
   const handleEditFood = async (id: string, data: any) => {
-    const res = await fetch(`/api/food/${id}`, {
+    const res = await apiFetch(`/api/food/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -68,7 +69,7 @@ export default function DashboardPage() {
   };
 
   const handleDeleteFood = async (id: string) => {
-    const res = await fetch(`/api/food/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/food/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Entry deleted.", "success");
       fetchData();
@@ -78,7 +79,7 @@ export default function DashboardPage() {
   };
 
   const handleEditExercise = async (id: string, data: any) => {
-    const res = await fetch(`/api/exercise/${id}`, {
+    const res = await apiFetch(`/api/exercise/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -92,7 +93,7 @@ export default function DashboardPage() {
   };
 
   const handleDeleteExercise = async (id: string) => {
-    const res = await fetch(`/api/exercise/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/exercise/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Exercise deleted.", "success");
       fetchData();
@@ -102,7 +103,7 @@ export default function DashboardPage() {
   };
 
   const handleEditWeight = async (id: string, data: any) => {
-    const res = await fetch(`/api/weight/${id}`, {
+    const res = await apiFetch(`/api/weight/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -116,7 +117,7 @@ export default function DashboardPage() {
   };
 
   const handleDeleteWeight = async (id: string) => {
-    const res = await fetch(`/api/weight/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/weight/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Weight deleted.", "success");
       fetchData();

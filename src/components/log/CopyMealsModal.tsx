@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { mealTypeLabels, mealTypeEmoji, type MealType } from "@/lib/meal-type";
+import { apiFetch } from "@/lib/api";
 
 interface CopyMealsModalProps {
   onCopy: (entries: any[], sourceDateLabel: string) => void;
@@ -24,7 +25,7 @@ export default function CopyMealsModal({ onCopy, onClose }: CopyMealsModalProps)
   const fetchEntries = useCallback(async (dateStr: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/food?date=${dateStr}`);
+      const res = await apiFetch(`/api/food?date=${dateStr}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data);

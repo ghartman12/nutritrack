@@ -11,6 +11,7 @@ import CreateFromLogsModal from "@/components/meals/CreateFromLogsModal";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { mealTypeLabels, type MealType } from "@/lib/meal-type";
+import { apiFetch } from "@/lib/api";
 
 export default function MealsPage() {
   const { toast, showToast, hideToast } = useToast();
@@ -29,7 +30,7 @@ export default function MealsPage() {
 
   const fetchMeals = useCallback(async () => {
     try {
-      const res = await fetch("/api/meals");
+      const res = await apiFetch("/api/meals");
       if (res.ok) {
         const data = await res.json();
         setMeals(data);
@@ -48,7 +49,7 @@ export default function MealsPage() {
   async function handleCreate(data: { name: string; items: MealItemData[] }) {
     setSaving(true);
     try {
-      const res = await fetch("/api/meals", {
+      const res = await apiFetch("/api/meals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -72,7 +73,7 @@ export default function MealsPage() {
     if (!editingId) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/meals/${editingId}`, {
+      const res = await apiFetch(`/api/meals/${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -93,7 +94,7 @@ export default function MealsPage() {
 
   async function handleDelete(id: string) {
     try {
-      const res = await fetch(`/api/meals/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/meals/${id}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Meal deleted.", "success");
         fetchMeals();
@@ -108,7 +109,7 @@ export default function MealsPage() {
   async function handleLogConfirm(id: string, mealType: MealType, date: string) {
     setLogLoading(true);
     try {
-      const res = await fetch(`/api/meals/${id}/log`, {
+      const res = await apiFetch(`/api/meals/${id}/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mealType, date }),

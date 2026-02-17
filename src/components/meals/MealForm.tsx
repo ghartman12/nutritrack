@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 import type { FoodSearchResult } from "@/types";
+import { apiFetch } from "@/lib/api";
 
 interface BaseRates {
   cal: number;
@@ -75,7 +76,7 @@ export default function MealForm({
     setSearchOpen(index);
 
     try {
-      const res = await fetch(`/api/food/search?q=${encodeURIComponent(trimmed)}`);
+      const res = await apiFetch(`/api/food/search?q=${encodeURIComponent(trimmed)}`);
       if (!res.ok) throw new Error("Search failed");
       const data: FoodSearchResult[] = await res.json();
       setSearchResults((prev) => {

@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: DEFAULT_USER_ID },
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 401 });
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { id: userId },
       include: { settings: true },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      // Auto-create user with default settings
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          settings: { create: {} },
+          streak: { create: {} },
+        },
+        include: { settings: true },
+      });
     }
 
     return NextResponse.json(user);
@@ -24,10 +37,15 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     const settings = await prisma.userSettings.update({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
       data: body,
     });
 

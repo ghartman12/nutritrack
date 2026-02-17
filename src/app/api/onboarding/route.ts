@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { getLLMProvider } from "@/lib/llm";
 
 export async function POST(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const {
@@ -15,7 +20,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     await prisma.userSettings.update({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
       data: {
         calorieGoal,
         proteinTarget,
@@ -36,7 +41,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     await prisma.userSettings.update({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
       data: {
         welcomeMessage,
         emptyStateMessage,
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
     });
 
     const user = await prisma.user.findUnique({
-      where: { id: DEFAULT_USER_ID },
+      where: { id: userId },
       include: { settings: true },
     });
 

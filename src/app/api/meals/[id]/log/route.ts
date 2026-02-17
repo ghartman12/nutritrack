@@ -1,10 +1,15 @@
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -29,7 +34,7 @@ export async function POST(
       meal.items.map((item) =>
         prisma.foodEntry.create({
           data: {
-            userId: DEFAULT_USER_ID,
+            userId,
             date: logDate,
             mealType,
             foodName: item.foodName,
@@ -53,7 +58,7 @@ export async function POST(
     yesterday.setDate(yesterday.getDate() - 1);
 
     const streak = await prisma.streak.findUnique({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
     });
 
     if (streak) {
@@ -63,7 +68,7 @@ export async function POST(
       if (lastLogged && lastLogged.getTime() === yesterday.getTime()) {
         // Logged yesterday — extend the streak
         await prisma.streak.update({
-          where: { userId: DEFAULT_USER_ID },
+          where: { userId },
           data: {
             currentStreak: streak.currentStreak + 1,
             longestStreak: Math.max(streak.longestStreak, streak.currentStreak + 1),
@@ -73,7 +78,7 @@ export async function POST(
       } else if (!lastLogged || lastLogged.getTime() < yesterday.getTime()) {
         // Missed a day — reset streak
         await prisma.streak.update({
-          where: { userId: DEFAULT_USER_ID },
+          where: { userId },
           data: {
             currentStreak: 1,
             lastLoggedDate: new Date(),
@@ -82,7 +87,7 @@ export async function POST(
       } else {
         // Already logged today — just update the timestamp
         await prisma.streak.update({
-          where: { userId: DEFAULT_USER_ID },
+          where: { userId },
           data: {
             lastLoggedDate: new Date(),
           },
@@ -92,7 +97,7 @@ export async function POST(
       // No streak record yet — create one
       await prisma.streak.create({
         data: {
-          userId: DEFAULT_USER_ID,
+          userId,
           currentStreak: 1,
           longestStreak: 1,
           lastLoggedDate: new Date(),

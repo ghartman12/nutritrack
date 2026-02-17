@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface CreateFromLogsModalProps {
   onClose: () => void;
@@ -26,7 +27,7 @@ export default function CreateFromLogsModal({
     setLoaded(false);
     setSelected(new Set());
     try {
-      const res = await fetch(`/api/food?date=${date}`);
+      const res = await apiFetch(`/api/food?date=${date}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data);

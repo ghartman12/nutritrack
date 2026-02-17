@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID required" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
 
     const existing = await prisma.foodEntry.findUnique({ where: { id } });
 
-    if (!existing || existing.userId !== DEFAULT_USER_ID) {
+    if (!existing || existing.userId !== userId) {
       return NextResponse.json(
         { error: "Food entry not found" },
         { status: 404 }
@@ -38,11 +46,19 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID required" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
 
     const existing = await prisma.foodEntry.findUnique({ where: { id } });
 
-    if (!existing || existing.userId !== DEFAULT_USER_ID) {
+    if (!existing || existing.userId !== userId) {
       return NextResponse.json(
         { error: "Food entry not found" },
         { status: 404 }

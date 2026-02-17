@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { getLLMProvider } from "@/lib/llm";
 import { startOfDay, endOfDay, formatDate } from "@/lib/utils";
 import { getStreak } from "@/lib/streak";
@@ -7,6 +7,11 @@ import type { UserData, DayLogs, WeekLogs } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
+    const rawUserId = getUserId(request);
+    if (!rawUserId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 401 });
+    }
+    const userId: string = rawUserId;
     const body = await request.json();
     const { type } = body;
 
@@ -18,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: DEFAULT_USER_ID },
+      where: { id: userId },
       include: { settings: true },
     });
 
@@ -29,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const streak = await getStreak();
+    const streak = await getStreak(userId);
     const llm = getLLMProvider();
     const s = user.settings;
 
@@ -46,19 +51,19 @@ export async function POST(request: NextRequest) {
       const [foods, exercises, waterEntries] = await Promise.all([
         prisma.foodEntry.findMany({
           where: {
-            userId: DEFAULT_USER_ID,
+            userId,
             date: { gte: startOfDay(date), lte: endOfDay(date) },
           },
         }),
         prisma.exerciseEntry.findMany({
           where: {
-            userId: DEFAULT_USER_ID,
+            userId,
             date: { gte: startOfDay(date), lte: endOfDay(date) },
           },
         }),
         prisma.waterEntry.findMany({
           where: {
-            userId: DEFAULT_USER_ID,
+            userId,
             date: { gte: startOfDay(date), lte: endOfDay(date) },
           },
         }),
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
 
       const weightEntry = await prisma.weightEntry.findFirst({
         where: {
-          userId: DEFAULT_USER_ID,
+          userId,
           date: { gte: startOfDay(date), lte: endOfDay(date) },
         },
       });
@@ -132,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     const digest = await prisma.digest.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         type: "weekly",
         date: new Date(),
         content: digestContent,

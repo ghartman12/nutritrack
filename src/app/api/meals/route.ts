@@ -1,10 +1,15 @@
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const meals = await prisma.savedMeal.findMany({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
       include: { items: true },
       orderBy: { updatedAt: "desc" },
     });
@@ -20,6 +25,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { name, items } = body;
@@ -33,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const meal = await prisma.savedMeal.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         name,
         items: {
           create: items.map((item: {

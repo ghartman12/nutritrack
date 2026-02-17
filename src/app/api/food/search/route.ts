@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchUSDA } from "@/lib/api/usda";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID required" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
@@ -18,7 +26,7 @@ export async function GET(request: NextRequest) {
     const [customFoods, usdaResults] = await Promise.all([
       prisma.customFood.findMany({
         where: {
-          userId: DEFAULT_USER_ID,
+          userId: userId,
           foodName: { contains: query },
         },
       }),

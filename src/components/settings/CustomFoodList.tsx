@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import CustomFoodForm from "@/components/log/CustomFoodForm";
+import { apiFetch } from "@/lib/api";
 
 interface CustomFood {
   id: string;
@@ -24,7 +25,7 @@ export default function CustomFoodList({ onToast }: CustomFoodListProps) {
 
   const fetchFoods = async () => {
     try {
-      const res = await fetch("/api/custom-foods");
+      const res = await apiFetch("/api/custom-foods");
       if (res.ok) setFoods(await res.json());
     } catch { /* non-critical */ }
     finally { setLoading(false); }
@@ -33,7 +34,7 @@ export default function CustomFoodList({ onToast }: CustomFoodListProps) {
   useEffect(() => { fetchFoods(); }, []);
 
   const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/custom-foods/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/custom-foods/${id}`, { method: "DELETE" });
     if (res.ok) {
       onToast("Custom food deleted.", "success");
       fetchFoods();
@@ -43,7 +44,7 @@ export default function CustomFoodList({ onToast }: CustomFoodListProps) {
   };
 
   const handleEdit = async (id: string, data: any) => {
-    const res = await fetch(`/api/custom-foods/${id}`, {
+    const res = await apiFetch(`/api/custom-foods/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

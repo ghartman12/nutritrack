@@ -7,6 +7,7 @@ import CalorieChart from "@/components/progress/CalorieChart";
 import MacroChart from "@/components/progress/MacroChart";
 import ExerciseChart from "@/components/progress/ExerciseChart";
 import { useUser } from "@/hooks/useUser";
+import { apiFetch } from "@/lib/api";
 
 interface DayAgg {
   date: string;
@@ -29,7 +30,7 @@ export default function ProgressPage() {
   const [macroDays, setMacroDays] = useState<DayAgg[]>([]);
   const [exerciseDays, setExerciseDays] = useState<ExerciseDayAgg[]>([]);
   const fetchData = useCallback(async () => {
-    const weightRes = await fetch("/api/weight?days=90");
+    const weightRes = await apiFetch("/api/weight?days=90");
 
     if (weightRes.ok) setWeights(await weightRes.json());
 
@@ -42,8 +43,8 @@ export default function ProgressPage() {
       const dateStr = d.toISOString().split("T")[0];
 
       const [foodRes, exRes] = await Promise.all([
-        fetch(`/api/food?date=${dateStr}`),
-        fetch(`/api/exercise?date=${dateStr}`),
+        apiFetch(`/api/food?date=${dateStr}`),
+        apiFetch(`/api/exercise?date=${dateStr}`),
       ]);
 
       if (foodRes.ok) {

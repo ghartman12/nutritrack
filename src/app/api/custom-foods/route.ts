@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 401 });
+    }
+
     const foods = await prisma.customFood.findMany({
-      where: { userId: DEFAULT_USER_ID },
+      where: { userId },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(foods);
@@ -16,12 +21,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { foodName, servingSize, calories, protein, carbs, fat, fiber } = body;
 
     const food = await prisma.customFood.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         foodName,
         servingSize: servingSize || "1 serving",
         calories,

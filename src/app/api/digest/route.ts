@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "daily";
@@ -9,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const digests = await prisma.digest.findMany({
       where: {
-        userId: DEFAULT_USER_ID,
+        userId,
         type,
       },
       orderBy: { date: "desc" },

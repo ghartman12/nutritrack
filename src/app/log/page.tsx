@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
 import { suggestMealType, type MealType } from "@/lib/meal-type";
 import type { NutritionEstimate, FoodSearchResult } from "@/types";
+import { apiFetch } from "@/lib/api";
 
 function LogContent() {
   const router = useRouter();
@@ -80,21 +81,21 @@ function LogContent() {
 
   const fetchFoods = async (d: string) => {
     try {
-      const res = await fetch(`/api/food?date=${d}`);
+      const res = await apiFetch(`/api/food?date=${d}`);
       if (res.ok) setDateFoods(await res.json());
     } catch { /* non-critical */ }
   };
 
   const fetchExercises = async (d: string) => {
     try {
-      const res = await fetch(`/api/exercise?date=${d}`);
+      const res = await apiFetch(`/api/exercise?date=${d}`);
       if (res.ok) setDateExercises(await res.json());
     } catch { /* non-critical */ }
   };
 
   const fetchWeights = async (d: string) => {
     try {
-      const res = await fetch(`/api/weight?date=${d}`);
+      const res = await apiFetch(`/api/weight?date=${d}`);
       if (res.ok) setDateWeights(await res.json());
     } catch { /* non-critical */ }
   };
@@ -117,7 +118,7 @@ function LogContent() {
     setEntryMethod("search");
 
     try {
-      const res = await fetch(`/api/food/search?q=${encodeURIComponent(query)}`);
+      const res = await apiFetch(`/api/food/search?q=${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);
@@ -133,7 +134,7 @@ function LogContent() {
     if (!searchQuery) return;
     setNlpLoading(true);
     try {
-      const res = await fetch("/api/food/nlp", {
+      const res = await apiFetch("/api/food/nlp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery, variations: true }),
@@ -162,7 +163,7 @@ function LogContent() {
     setNlpLoading(true);
     setEntryMethod("barcode");
     try {
-      const res = await fetch(`/api/food/barcode?code=${barcode}`);
+      const res = await apiFetch(`/api/food/barcode?code=${barcode}`);
       if (res.ok) {
         const data = await res.json();
         setNutritionData(data);
@@ -213,7 +214,7 @@ function LogContent() {
   const handleSaveFood = async (data: NutritionEstimate) => {
     setSaveLoading(true);
     try {
-      const res = await fetch("/api/food", {
+      const res = await apiFetch("/api/food", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -259,7 +260,7 @@ function LogContent() {
     setCopyingMeals(true);
     try {
       for (const entry of entries) {
-        await fetch("/api/food", {
+        await apiFetch("/api/food", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -288,7 +289,7 @@ function LogContent() {
 
   const handleCreateCustomFood = async (data: { foodName: string; servingSize: string; calories: number; protein: number; carbs: number; fat: number; fiber: number }) => {
     try {
-      const res = await fetch("/api/custom-foods", {
+      const res = await apiFetch("/api/custom-foods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -318,7 +319,7 @@ function LogContent() {
   };
 
   const handleEditFood = async (id: string, data: any) => {
-    const res = await fetch(`/api/food/${id}`, {
+    const res = await apiFetch(`/api/food/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -332,7 +333,7 @@ function LogContent() {
   };
 
   const handleDeleteFood = async (id: string) => {
-    const res = await fetch(`/api/food/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/food/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Entry deleted.", "success");
       fetchFoods(selectedDate);
@@ -342,7 +343,7 @@ function LogContent() {
   };
 
   const handleEditExercise = async (id: string, data: any) => {
-    const res = await fetch(`/api/exercise/${id}`, {
+    const res = await apiFetch(`/api/exercise/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -356,7 +357,7 @@ function LogContent() {
   };
 
   const handleDeleteExercise = async (id: string) => {
-    const res = await fetch(`/api/exercise/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/exercise/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Exercise deleted.", "success");
       fetchExercises(selectedDate);
@@ -366,7 +367,7 @@ function LogContent() {
   };
 
   const handleEditWeight = async (id: string, data: any) => {
-    const res = await fetch(`/api/weight/${id}`, {
+    const res = await apiFetch(`/api/weight/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -380,7 +381,7 @@ function LogContent() {
   };
 
   const handleDeleteWeight = async (id: string) => {
-    const res = await fetch(`/api/weight/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/weight/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Weight deleted.", "success");
       fetchWeights(selectedDate);
@@ -392,7 +393,7 @@ function LogContent() {
   const handleExerciseSubmit = async (data: { activity: string; durationMinutes: number; estimatedCalories: number; isEstimate: boolean; notes: string }) => {
     setSaveLoading(true);
     try {
-      const res = await fetch("/api/exercise", {
+      const res = await apiFetch("/api/exercise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, ...(!isToday ? { date: selectedDate } : {}) }),
@@ -412,7 +413,7 @@ function LogContent() {
   const handleWeightSubmit = async (data: { weight: number; unit: string }) => {
     setSaveLoading(true);
     try {
-      const res = await fetch("/api/weight", {
+      const res = await apiFetch("/api/weight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, ...(!isToday ? { date: selectedDate } : {}) }),

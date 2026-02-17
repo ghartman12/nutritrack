@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface UserSettings {
   calorieGoal: number;
@@ -29,7 +30,7 @@ export function useUser() {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch("/api/user");
+      const res = await apiFetch("/api/user");
       if (res.ok) {
         const data = await res.json();
         setUser(data);

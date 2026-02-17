@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { startOfDay, endOfDay } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date");
     const days = parseInt(searchParams.get("days") || "30", 10);
 
-    let where: any = { userId: DEFAULT_USER_ID };
+    let where: any = { userId: userId };
 
     if (dateParam) {
       const date = new Date(dateParam);
@@ -35,13 +40,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { weight, unit, date: dateStr } = body;
 
     const entry = await prisma.weightEntry.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId: userId,
         weight,
         unit,
         ...(dateStr ? { date: new Date(dateStr + "T12:00:00") } : {}),

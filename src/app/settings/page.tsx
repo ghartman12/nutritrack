@@ -10,16 +10,19 @@ import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
 import Spinner from "@/components/ui/Spinner";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import { useUserId } from "@/providers/UserProvider";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, loading, refetch } = useUser();
   const { toast, showToast, hideToast } = useToast();
+  const { resetUser } = useUserId();
   const [regenerating, setRegenerating] = useState(false);
   const [resettingOnboarding, setResettingOnboarding] = useState(false);
 
   const handleSave = async (data: any) => {
-    const res = await fetch("/api/user", {
+    const res = await apiFetch("/api/user", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -35,7 +38,7 @@ export default function SettingsPage() {
   const handleRegenerate = async () => {
     setRegenerating(true);
     try {
-      const res = await fetch("/api/onboarding", {
+      const res = await apiFetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,7 +110,7 @@ export default function SettingsPage() {
             onClick={async () => {
               setResettingOnboarding(true);
               try {
-                const res = await fetch("/api/user", {
+                const res = await apiFetch("/api/user", {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ onboardingComplete: false }),
@@ -134,6 +137,24 @@ export default function SettingsPage() {
           >
             Terms of Service
           </Link>
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-red-600">Danger Zone</h3>
+          <button
+            onClick={() => {
+              if (window.confirm("This will permanently reset all your data and start fresh. Are you sure?")) {
+                resetUser();
+              }
+            }}
+            className="w-full py-2.5 rounded-xl border border-red-300 text-red-600 font-medium hover:bg-red-50 text-sm"
+          >
+            Reset My Data
+          </button>
+          <p className="text-xs text-gray-400">
+            This clears your local identity and creates a new account. All
+            existing data will be lost.
+          </p>
         </div>
       </div>
       <BottomNav />

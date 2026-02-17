@@ -1,13 +1,13 @@
-import { prisma, DEFAULT_USER_ID } from "./db";
+import { prisma } from "./db";
 import { startOfDay } from "./utils";
 
-export async function updateStreak(): Promise<{
+export async function updateStreak(userId: string): Promise<{
   currentStreak: number;
   longestStreak: number;
   milestone: number | null;
 }> {
   const streak = await prisma.streak.findUnique({
-    where: { userId: DEFAULT_USER_ID },
+    where: { userId },
   });
 
   if (!streak) {
@@ -41,7 +41,7 @@ export async function updateStreak(): Promise<{
   const newLongest = Math.max(streak.longestStreak, newStreak);
 
   await prisma.streak.update({
-    where: { userId: DEFAULT_USER_ID },
+    where: { userId },
     data: {
       currentStreak: newStreak,
       longestStreak: newLongest,
@@ -55,8 +55,8 @@ export async function updateStreak(): Promise<{
   return { currentStreak: newStreak, longestStreak: newLongest, milestone };
 }
 
-export async function getStreak() {
+export async function getStreak(userId: string) {
   return prisma.streak.findUnique({
-    where: { userId: DEFAULT_USER_ID },
+    where: { userId },
   });
 }

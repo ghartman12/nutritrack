@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, DEFAULT_USER_ID } from "@/lib/db";
+import { prisma, getUserId } from "@/lib/db";
 import { startOfDay, endOfDay } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date");
@@ -17,7 +22,7 @@ export async function GET(request: NextRequest) {
     const date = new Date(dateParam);
     const entries = await prisma.exerciseEntry.findMany({
       where: {
-        userId: DEFAULT_USER_ID,
+        userId: userId,
         date: {
           gte: startOfDay(date),
           lte: endOfDay(date),
@@ -37,6 +42,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const userId = getUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { activity, durationMinutes, estimatedCalories, isEstimate, notes, date: dateStr } =
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const entry = await prisma.exerciseEntry.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId: userId,
         activity,
         durationMinutes,
         estimatedCalories,

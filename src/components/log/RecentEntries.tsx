@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface RecentEntry {
   id: string;
@@ -22,7 +23,7 @@ export default function RecentEntries({ onLogAgain }: RecentEntriesProps) {
   useEffect(() => {
     async function fetchRecent() {
       const today = new Date().toISOString().split("T")[0];
-      const res = await fetch(`/api/food?date=${today}`);
+      const res = await apiFetch(`/api/food?date=${today}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data.slice(0, 5));
