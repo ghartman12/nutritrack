@@ -63,7 +63,7 @@ export default function CustomFoodForm({ onSubmit, onCancel, loading, initialDat
   const isComplete = form.foodName.trim() !== "" && form.calories > 0;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">
         {initialData ? "Edit Custom Food" : "Create Custom Food"}
       </h3>

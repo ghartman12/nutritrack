@@ -47,7 +47,7 @@ export default function SavedMealCard({
   }, [meal.updatedAt]);
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-shadow duration-200 hover:shadow-md">
       {/* Header — clickable to expand */}
       <button
         type="button"

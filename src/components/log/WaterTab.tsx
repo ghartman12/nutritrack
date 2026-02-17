@@ -117,7 +117,7 @@ export default function WaterTab({ date }: WaterTabProps) {
       <WaterWidget ounces={totalOunces} onUpdate={handleUpdate} waterUnit={waterUnit} waterGoal={waterGoal} loading={loading} />
 
       {entries.length > 0 ? (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
           <div className="flex items-center gap-2 mb-3">
             <h4 className="text-sm font-semibold text-gray-900">{isToday ? "Today's" : "Day's"} Entries</h4>
             <span className="text-xs text-gray-400 ml-auto">{entries.length} entry{entries.length !== 1 ? "ies" : ""}</span>

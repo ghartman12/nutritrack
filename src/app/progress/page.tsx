@@ -81,7 +81,7 @@ export default function ProgressPage() {
 
   return (
     <PageContainer>
-      <div className="px-4 pt-6 space-y-4">
+      <div className="px-5 pt-6 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Progress</h1>
 
         <WeightChart entries={weights} />

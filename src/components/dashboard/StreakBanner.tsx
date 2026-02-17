@@ -9,7 +9,7 @@ export default function StreakBanner({ currentStreak, longestStreak }: StreakBan
   if (currentStreak === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-4 text-white">
+    <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-3xl">🔥</span>

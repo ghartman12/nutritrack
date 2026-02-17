@@ -44,7 +44,7 @@ export default function WaterWidget({ ounces, onUpdate, waterUnit, waterGoal, lo
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
       <h3 className="text-sm font-semibold text-gray-900 mb-4">Water</h3>
 
       <div className="flex items-center justify-center mb-4">

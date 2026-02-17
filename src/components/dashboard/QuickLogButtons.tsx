@@ -14,7 +14,7 @@ export default function QuickLogButtons() {
         <Link
           key={btn.href}
           href={btn.href}
-          className="flex flex-col items-center gap-1.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-colors"
+          className="flex flex-col items-center gap-1.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all duration-200 hover:shadow-md"
         >
           <span className="text-2xl">{btn.icon}</span>
           <span className="text-xs font-medium text-gray-700">{btn.label}</span>

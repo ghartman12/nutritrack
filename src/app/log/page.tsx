@@ -435,7 +435,7 @@ function LogContent() {
       {showScanner && <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />}
       {showCopyModal && <CopyMealsModal onCopy={handleCopyFromDay} onClose={() => setShowCopyModal(false)} />}
 
-      <div className="px-4 pt-6 space-y-4">
+      <div className="px-5 pt-6 space-y-6">
         {/* Date navigator */}
         <div className="flex items-center justify-between">
           <button
@@ -517,7 +517,7 @@ function LogContent() {
         </div>
 
         {tab === "food" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <MealTypeSelector value={mealType} onChange={setMealType} />
 
             {!nutritionData && !showManual && !showCustomFood && (
@@ -611,7 +611,7 @@ function LogContent() {
         )}
 
         {tab === "exercise" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <ExerciseForm key={formResetKey} onSubmit={handleExerciseSubmit} loading={saveLoading} />
 
             {dateExercises.length > 0 && (
@@ -629,7 +629,7 @@ function LogContent() {
         )}
 
         {tab === "weight" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <WeightForm
               key={formResetKey}
               defaultUnit={user?.settings?.weightUnit || "lbs"}

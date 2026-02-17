@@ -72,7 +72,7 @@ export default function SettingsPage() {
   return (
     <PageContainer>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-      <div className="px-4 pt-6 space-y-6">
+      <div className="px-5 pt-6 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
 
         <SettingsForm

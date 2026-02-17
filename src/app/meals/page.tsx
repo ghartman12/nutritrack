@@ -166,7 +166,7 @@ export default function MealsPage() {
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
-      <div className="px-4 pt-6 space-y-4">
+      <div className="px-5 pt-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Meals</h1>

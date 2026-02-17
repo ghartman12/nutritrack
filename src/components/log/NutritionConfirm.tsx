@@ -136,7 +136,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
   })();
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Confirm Nutrition</h3>
         {data.isEstimate && <Badge variant="ai" tooltip="This is an AI estimate and may not be accurate. Not intended as medical advice. Consult a healthcare professional for personalized nutrition guidance.">AI Estimate</Badge>}

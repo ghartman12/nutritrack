@@ -270,11 +270,11 @@ export default function TodayLogSummary({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {sortedMealTypes.map((mealType) => {
         const entries = mealGroups[mealType];
         return (
-          <div key={mealType} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div key={mealType} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <span>{mealTypeEmoji[mealType] || "🍽️"}</span>
               <h4 className="text-sm font-semibold text-gray-900">
@@ -329,7 +329,7 @@ export default function TodayLogSummary({
       })}
 
       {exercises.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
           <div className="flex items-center gap-2 mb-2">
             <span>🏃</span>
             <h4 className="text-sm font-semibold text-gray-900">Exercise</h4>
@@ -381,7 +381,7 @@ export default function TodayLogSummary({
       )}
 
       {weights.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
           <div className="flex items-center gap-2 mb-2">
             <span>⚖️</span>
             <h4 className="text-sm font-semibold text-gray-900">Weight</h4>

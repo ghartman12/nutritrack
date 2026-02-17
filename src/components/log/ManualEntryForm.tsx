@@ -66,7 +66,7 @@ export default function ManualEntryForm({ onSubmit, onCancel, loading }: ManualE
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow duration-200 hover:shadow-md">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Manual Entry</h3>
       <div className="space-y-3">
         <Input
