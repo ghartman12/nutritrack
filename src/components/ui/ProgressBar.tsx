@@ -5,6 +5,7 @@ interface ProgressBarProps {
   max: number;
   color?: string;
   label?: string;
+  unit?: string;
   showValue?: boolean;
   className?: string;
 }
@@ -14,6 +15,7 @@ export default function ProgressBar({
   max,
   color = "bg-emerald-500",
   label,
+  unit,
   showValue = true,
   className,
 }: ProgressBarProps) {
@@ -25,7 +27,7 @@ export default function ProgressBar({
           {label && <span className="text-sm text-gray-600">{label}</span>}
           {showValue && (
             <span className="text-sm font-medium text-gray-900">
-              {Math.round(value)} / {Math.round(max)}
+              {Math.round(value)} / {Math.round(max)}{unit ? unit : ""}
             </span>
           )}
         </div>

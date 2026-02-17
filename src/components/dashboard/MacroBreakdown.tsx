@@ -26,18 +26,21 @@ export default function MacroBreakdown({
           label="Protein"
           value={protein}
           max={proteinTarget}
+          unit="g"
           color="bg-blue-500"
         />
         <ProgressBar
           label="Carbs"
           value={carbs}
           max={carbTarget}
+          unit="g"
           color="bg-amber-500"
         />
         <ProgressBar
           label="Fat"
           value={fat}
           max={fatTarget}
+          unit="g"
           color="bg-rose-500"
         />
       </div>
