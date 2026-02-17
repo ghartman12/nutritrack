@@ -37,13 +37,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { weight, unit } = body;
+    const { weight, unit, date: dateStr } = body;
 
     const entry = await prisma.weightEntry.create({
       data: {
         userId: DEFAULT_USER_ID,
         weight,
         unit,
+        ...(dateStr ? { date: new Date(dateStr + "T12:00:00") } : {}),
       },
     });
 

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/PageContainer";
 import BottomNav from "@/components/layout/BottomNav";
 import SettingsForm from "@/components/settings/SettingsForm";
+import CustomFoodList from "@/components/settings/CustomFoodList";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
@@ -81,11 +82,18 @@ export default function SettingsPage() {
             carbTarget: settings.carbTarget,
             fatTarget: settings.fatTarget,
             weightUnit: settings.weightUnit,
+            waterUnit: settings.waterUnit || "oz",
+            waterGoal: settings.waterGoal || 64,
             activityLevel: settings.activityLevel,
             llmProvider: settings.llmProvider,
           }}
           onSave={handleSave}
         />
+
+        <div className="border-t pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">Custom Foods</h3>
+          <CustomFoodList onToast={showToast} />
+        </div>
 
         <div className="border-t pt-4 space-y-3">
           <button

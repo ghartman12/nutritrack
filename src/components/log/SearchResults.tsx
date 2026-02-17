@@ -57,7 +57,7 @@ export default function SearchResults({ results, onSelect, loading, query }: Sea
               )}
             </div>
             <Badge
-              variant={result.source === "ai" ? "ai" : "default"}
+              variant={result.source === "ai" ? "ai" : result.source === "custom" ? "custom" : "default"}
               tooltip={result.source === "ai" ? "This is an AI estimate and may not be accurate. Not intended as medical advice. Consult a healthcare professional for personalized nutrition guidance." : undefined}
             >
               {result.source === "ai" ? "AI ESTIMATE" : result.source.toUpperCase()}

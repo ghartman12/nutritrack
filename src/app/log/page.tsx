@@ -10,6 +10,9 @@ import NutritionConfirm from "@/components/log/NutritionConfirm";
 import ManualEntryForm from "@/components/log/ManualEntryForm";
 import SearchResults from "@/components/log/SearchResults";
 import RecentEntries from "@/components/log/RecentEntries";
+import CustomFoodForm from "@/components/log/CustomFoodForm";
+import CopyMealsModal from "@/components/log/CopyMealsModal";
+import WaterTab from "@/components/log/WaterTab";
 import TodayLogSummary from "@/components/dashboard/TodayLogSummary";
 import ExerciseForm from "@/components/exercise/ExerciseForm";
 import WeightForm from "@/components/weight/WeightForm";
@@ -26,10 +29,13 @@ function LogContent() {
   const { toast, showToast, hideToast } = useToast();
 
   const initialTab = searchParams.get("tab") || "food";
-  const [tab, setTab] = useState<"food" | "exercise" | "weight">(initialTab as any);
+  const [tab, setTab] = useState<"food" | "exercise" | "weight" | "water">(initialTab as any);
   const [mealType, setMealType] = useState<MealType>(suggestMealType());
   const [showScanner, setShowScanner] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [showCustomFood, setShowCustomFood] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyingMeals, setCopyingMeals] = useState(false);
   const [nlpLoading, setNlpLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -38,38 +44,70 @@ function LogContent() {
   const [savedSearchResults, setSavedSearchResults] = useState<FoodSearchResult[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [entryMethod, setEntryMethod] = useState<string>("nlp");
-  const [todayFoods, setTodayFoods] = useState<any[]>([]);
-  const [todayExercises, setTodayExercises] = useState<any[]>([]);
-  const [todayWeights, setTodayWeights] = useState<any[]>([]);
+  const [dateFoods, setDateFoods] = useState<any[]>([]);
+  const [dateExercises, setDateExercises] = useState<any[]>([]);
+  const [dateWeights, setDateWeights] = useState<any[]>([]);
+  const [formResetKey, setFormResetKey] = useState(0);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const todayDate = new Date().toISOString().split("T")[0];
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const isToday = selectedDate === todayStr;
 
-  const fetchTodayFoods = async () => {
+  function formatDateLabel(dateStr: string): string {
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const d = new Date(dateStr + "T12:00:00");
+    const formatted = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    if (dateStr === today) return `Today, ${formatted}`;
+    if (dateStr === yesterdayStr) return `Yesterday, ${formatted}`;
+    const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+    return `${dayName}, ${formatted}`;
+  }
+
+  function shortDateLabel(dateStr: string): string {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  const navigateDate = (delta: number) => {
+    const d = new Date(selectedDate + "T12:00:00");
+    d.setDate(d.getDate() + delta);
+    setSelectedDate(d.toISOString().split("T")[0]);
+  };
+
+  const fetchFoods = async (d: string) => {
     try {
-      const res = await fetch(`/api/food?date=${todayDate}`);
-      if (res.ok) setTodayFoods(await res.json());
+      const res = await fetch(`/api/food?date=${d}`);
+      if (res.ok) setDateFoods(await res.json());
     } catch { /* non-critical */ }
   };
 
-  const fetchTodayExercises = async () => {
+  const fetchExercises = async (d: string) => {
     try {
-      const res = await fetch(`/api/exercise?date=${todayDate}`);
-      if (res.ok) setTodayExercises(await res.json());
+      const res = await fetch(`/api/exercise?date=${d}`);
+      if (res.ok) setDateExercises(await res.json());
     } catch { /* non-critical */ }
   };
 
-  const fetchTodayWeights = async () => {
+  const fetchWeights = async (d: string) => {
     try {
-      const res = await fetch(`/api/weight?date=${todayDate}`);
-      if (res.ok) setTodayWeights(await res.json());
+      const res = await fetch(`/api/weight?date=${d}`);
+      if (res.ok) setDateWeights(await res.json());
     } catch { /* non-critical */ }
+  };
+
+  const refreshData = () => {
+    fetchFoods(selectedDate);
+    fetchExercises(selectedDate);
+    fetchWeights(selectedDate);
   };
 
   useEffect(() => {
-    fetchTodayFoods();
-    fetchTodayExercises();
-    fetchTodayWeights();
-  }, []);
+    refreshData();
+  }, [selectedDate]);
 
   const handleSmartInput = async (query: string) => {
     setSearchResults([]);
@@ -188,6 +226,7 @@ function LogContent() {
           fiber: data.fiber,
           entryMethod,
           isEstimate: data.isEstimate,
+          ...(!isToday ? { date: selectedDate } : {}),
         }),
       });
       if (res.ok) {
@@ -195,8 +234,11 @@ function LogContent() {
         showToast("Food logged!", "success");
         setNutritionData(null);
         setSearchResults([]);
+        setSavedSearchResults([]);
+        setSearchQuery("");
         setShowManual(false);
-        fetchTodayFoods();
+        setFormResetKey((k) => k + 1);
+        fetchFoods(selectedDate);
         if (result.milestone) {
           router.push(`/dashboard?milestone=${result.milestone}`);
         }
@@ -211,6 +253,55 @@ function LogContent() {
   const handleManualSave = (data: { foodName: string; calories: number; protein: number; carbs: number; fat: number; fiber: number }) => {
     handleSaveFood({ ...data, isEstimate: false });
     setEntryMethod("manual");
+  };
+
+  const handleCopyFromDay = async (entries: any[], sourceDateLabel: string) => {
+    setCopyingMeals(true);
+    try {
+      for (const entry of entries) {
+        await fetch("/api/food", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mealType: entry.mealType || mealType,
+            foodName: entry.foodName,
+            calories: entry.calories,
+            protein: entry.protein,
+            carbs: entry.carbs,
+            fat: entry.fat,
+            fiber: entry.fiber,
+            entryMethod: "copy",
+            isEstimate: false,
+            ...(!isToday ? { date: selectedDate } : {}),
+          }),
+        });
+      }
+      showToast(`Copied ${entries.length} items from ${sourceDateLabel}!`, "success");
+      setShowCopyModal(false);
+      fetchFoods(selectedDate);
+    } catch {
+      showToast("Failed to copy meals.", "error");
+    } finally {
+      setCopyingMeals(false);
+    }
+  };
+
+  const handleCreateCustomFood = async (data: { foodName: string; servingSize: string; calories: number; protein: number; carbs: number; fat: number; fiber: number }) => {
+    try {
+      const res = await fetch("/api/custom-foods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        showToast("Custom food created!", "success");
+        setShowCustomFood(false);
+      } else {
+        showToast("Failed to create custom food.", "error");
+      }
+    } catch {
+      showToast("Failed to create custom food.", "error");
+    }
   };
 
   const handleLogAgain = (entry: any) => {
@@ -234,7 +325,7 @@ function LogContent() {
     });
     if (res.ok) {
       showToast("Entry updated!", "success");
-      fetchTodayFoods();
+      fetchFoods(selectedDate);
     } else {
       showToast("Failed to update entry.", "error");
     }
@@ -244,7 +335,7 @@ function LogContent() {
     const res = await fetch(`/api/food/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Entry deleted.", "success");
-      fetchTodayFoods();
+      fetchFoods(selectedDate);
     } else {
       showToast("Failed to delete entry.", "error");
     }
@@ -258,7 +349,7 @@ function LogContent() {
     });
     if (res.ok) {
       showToast("Exercise updated!", "success");
-      fetchTodayExercises();
+      fetchExercises(selectedDate);
     } else {
       showToast("Failed to update exercise.", "error");
     }
@@ -268,7 +359,7 @@ function LogContent() {
     const res = await fetch(`/api/exercise/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Exercise deleted.", "success");
-      fetchTodayExercises();
+      fetchExercises(selectedDate);
     } else {
       showToast("Failed to delete exercise.", "error");
     }
@@ -282,7 +373,7 @@ function LogContent() {
     });
     if (res.ok) {
       showToast("Weight updated!", "success");
-      fetchTodayWeights();
+      fetchWeights(selectedDate);
     } else {
       showToast("Failed to update weight.", "error");
     }
@@ -292,7 +383,7 @@ function LogContent() {
     const res = await fetch(`/api/weight/${id}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Weight deleted.", "success");
-      fetchTodayWeights();
+      fetchWeights(selectedDate);
     } else {
       showToast("Failed to delete weight.", "error");
     }
@@ -304,11 +395,12 @@ function LogContent() {
       const res = await fetch("/api/exercise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, ...(!isToday ? { date: selectedDate } : {}) }),
       });
       if (res.ok) {
         showToast("Exercise logged!", "success");
-        fetchTodayExercises();
+        setFormResetKey((k) => k + 1);
+        fetchExercises(selectedDate);
       }
     } catch {
       showToast("Failed to save. Please try again.", "error");
@@ -323,11 +415,12 @@ function LogContent() {
       const res = await fetch("/api/weight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, ...(!isToday ? { date: selectedDate } : {}) }),
       });
       if (res.ok) {
         showToast("Weight logged!", "success");
-        fetchTodayWeights();
+        setFormResetKey((k) => k + 1);
+        fetchWeights(selectedDate);
       }
     } catch {
       showToast("Failed to save. Please try again.", "error");
@@ -340,13 +433,77 @@ function LogContent() {
     <PageContainer>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       {showScanner && <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />}
+      {showCopyModal && <CopyMealsModal onCopy={handleCopyFromDay} onClose={() => setShowCopyModal(false)} />}
 
       <div className="px-4 pt-6 space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Log</h1>
+        {/* Date navigator */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigateDate(-1)}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+            aria-label="Previous day"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div className="flex flex-col items-center">
+            <button
+              onClick={() => setShowDatePicker((p) => !p)}
+              className="text-lg font-bold text-gray-900 hover:text-emerald-600 transition-colors"
+            >
+              {formatDateLabel(selectedDate)}
+            </button>
+            {!isToday && (
+              <button
+                onClick={() => setSelectedDate(todayStr)}
+                className="text-xs text-emerald-600 font-medium mt-0.5 hover:text-emerald-700"
+              >
+                Jump to today
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => navigateDate(1)}
+            disabled={isToday}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+            aria-label="Next day"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {showDatePicker && (
+          <div className="flex justify-center">
+            <input
+              type="date"
+              value={selectedDate}
+              max={todayStr}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setShowDatePicker(false);
+              }}
+              className="rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          </div>
+        )}
+
+        {!isToday && (
+          <div className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-700">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Logging to {shortDateLabel(selectedDate)}
+          </div>
+        )}
 
         {/* Tab selector */}
         <div className="flex bg-gray-100 rounded-xl p-1">
-          {(["food", "exercise", "weight"] as const).map((t) => (
+          {(["food", "exercise", "weight", "water"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -363,9 +520,17 @@ function LogContent() {
           <div className="space-y-4">
             <MealTypeSelector value={mealType} onChange={setMealType} />
 
-            {!nutritionData && !showManual && (
+            {!nutritionData && !showManual && !showCustomFood && (
               <>
+                <button
+                  onClick={() => setShowCopyModal(true)}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Copy meals from another day
+                </button>
+
                 <SmartInput
+                  key={formResetKey}
                   onSubmit={handleSmartInput}
                   onScanBarcode={() => setShowScanner(true)}
                   loading={nlpLoading}
@@ -395,6 +560,13 @@ function LogContent() {
                   Or enter nutrition manually
                 </button>
 
+                <button
+                  onClick={() => setShowCustomFood(true)}
+                  className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                >
+                  Create a custom food
+                </button>
+
                 <RecentEntries onLogAgain={handleLogAgain} />
               </>
             )}
@@ -417,11 +589,18 @@ function LogContent() {
               />
             )}
 
-            {todayFoods.length > 0 && (
+            {showCustomFood && (
+              <CustomFoodForm
+                onSubmit={handleCreateCustomFood}
+                onCancel={() => setShowCustomFood(false)}
+              />
+            )}
+
+            {dateFoods.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Today&apos;s Entries</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">{isToday ? "Today's" : `${shortDateLabel(selectedDate)}'s`} Entries</h2>
                 <TodayLogSummary
-                  foods={todayFoods}
+                  foods={dateFoods}
                   exercises={[]}
                   onEditFood={handleEditFood}
                   onDeleteFood={handleDeleteFood}
@@ -433,14 +612,14 @@ function LogContent() {
 
         {tab === "exercise" && (
           <div className="space-y-4">
-            <ExerciseForm onSubmit={handleExerciseSubmit} loading={saveLoading} />
+            <ExerciseForm key={formResetKey} onSubmit={handleExerciseSubmit} loading={saveLoading} />
 
-            {todayExercises.length > 0 && (
+            {dateExercises.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Today&apos;s Exercises</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">{isToday ? "Today's" : `${shortDateLabel(selectedDate)}'s`} Exercises</h2>
                 <TodayLogSummary
                   foods={[]}
-                  exercises={todayExercises}
+                  exercises={dateExercises}
                   onEditExercise={handleEditExercise}
                   onDeleteExercise={handleDeleteExercise}
                 />
@@ -452,18 +631,19 @@ function LogContent() {
         {tab === "weight" && (
           <div className="space-y-4">
             <WeightForm
+              key={formResetKey}
               defaultUnit={user?.settings?.weightUnit || "lbs"}
               onSubmit={handleWeightSubmit}
               loading={saveLoading}
             />
 
-            {todayWeights.length > 0 && (
+            {dateWeights.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Today&apos;s Weigh-ins</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">{isToday ? "Today's" : `${shortDateLabel(selectedDate)}'s`} Weigh-ins</h2>
                 <TodayLogSummary
                   foods={[]}
                   exercises={[]}
-                  weights={todayWeights}
+                  weights={dateWeights}
                   onEditWeight={handleEditWeight}
                   onDeleteWeight={handleDeleteWeight}
                 />
@@ -471,6 +651,8 @@ function LogContent() {
             )}
           </div>
         )}
+
+        {tab === "water" && <WaterTab key={selectedDate} date={selectedDate} />}
       </div>
       <BottomNav />
     </PageContainer>

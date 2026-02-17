@@ -24,6 +24,12 @@ function extractNutrient(
   return found?.value ?? 0;
 }
 
+function titleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
   const apiKey = process.env.USDA_API_KEY;
   if (!apiKey) {
@@ -43,7 +49,7 @@ export async function searchUSDA(query: string): Promise<FoodSearchResult[]> {
     const foods: USDAFood[] = data.foods || [];
 
     return foods.map((food) => ({
-      foodName: food.description,
+      foodName: titleCase(food.description),
       calories: extractNutrient(food.foodNutrients, "Energy"),
       protein: extractNutrient(food.foodNutrients, "Protein"),
       carbs: extractNutrient(

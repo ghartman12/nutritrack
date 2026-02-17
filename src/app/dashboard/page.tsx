@@ -5,7 +5,6 @@ import BottomNav from "@/components/layout/BottomNav";
 import StreakBanner from "@/components/dashboard/StreakBanner";
 import CalorieSummary from "@/components/dashboard/CalorieSummary";
 import MacroBreakdown from "@/components/dashboard/MacroBreakdown";
-import WaterWidget from "@/components/dashboard/WaterWidget";
 import DigestCard from "@/components/dashboard/DigestCard";
 import QuickLogButtons from "@/components/dashboard/QuickLogButtons";
 import TodayLogSummary from "@/components/dashboard/TodayLogSummary";
@@ -24,28 +23,20 @@ export default function DashboardPage() {
   const [exercises, setExercises] = useState<any[]>([]);
   const [weights, setWeights] = useState<any[]>([]);
   const [streak, setStreak] = useState<any>(null);
-  const [waterOunces, setWaterOunces] = useState(0);
-  const [waterEntries, setWaterEntries] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     const date = todayStr();
-    const [foodRes, exRes, weightRes, streakRes, waterRes] = await Promise.all([
+    const [foodRes, exRes, weightRes, streakRes] = await Promise.all([
       fetch(`/api/food?date=${date}`),
       fetch(`/api/exercise?date=${date}`),
       fetch(`/api/weight?date=${date}`),
       fetch("/api/streak"),
-      fetch(`/api/water?date=${date}`),
     ]);
 
     if (foodRes.ok) setFoods(await foodRes.json());
     if (exRes.ok) setExercises(await exRes.json());
     if (weightRes.ok) setWeights(await weightRes.json());
     if (streakRes.ok) setStreak(await streakRes.json());
-    if (waterRes.ok) {
-      const wd = await waterRes.json();
-      setWaterOunces(wd.totalOunces);
-      setWaterEntries(wd.entries);
-    }
   }, []);
 
   useEffect(() => {
@@ -177,31 +168,6 @@ export default function DashboardPage() {
           proteinTarget={settings?.proteinTarget || 150}
           carbTarget={settings?.carbTarget || 250}
           fatTarget={settings?.fatTarget || 65}
-        />
-
-        <WaterWidget
-          ounces={waterOunces}
-          waterUnit={settings?.waterUnit || "oz"}
-          onUpdate={async (newOunces) => {
-            const delta = newOunces - waterOunces;
-            if (delta === 0) return;
-            setWaterOunces(newOunces);
-            try {
-              if (delta > 0) {
-                await fetch("/api/water", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ ounces: delta, date: todayStr() }),
-                });
-              } else if (waterEntries.length > 0) {
-                const mostRecent = waterEntries[waterEntries.length - 1];
-                await fetch(`/api/water/${mostRecent.id}`, { method: "DELETE" });
-              }
-              fetchData();
-            } catch {
-              fetchData();
-            }
-          }}
         />
 
         <QuickLogButtons />

@@ -45,12 +45,12 @@ export default function ExerciseForm({ onSubmit, loading }: ExerciseFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cal = manualCalories ? parseFloat(manualCalories) : calories;
-    if (!activity.trim() || !duration || cal === null) return;
+    if (!activity.trim() || !duration) return;
     onSubmit({
       activity: activity.trim(),
       durationMinutes: parseInt(duration),
-      estimatedCalories: cal,
-      isEstimate: !manualCalories,
+      estimatedCalories: cal ?? 0,
+      isEstimate: !manualCalories && calories !== null,
       notes: notes.trim(),
     });
   };
@@ -128,7 +128,7 @@ export default function ExerciseForm({ onSubmit, loading }: ExerciseFormProps) {
 
       <button
         type="submit"
-        disabled={loading || !activity.trim() || !duration || (calories === null && !manualCalories)}
+        disabled={loading || !activity.trim() || !duration}
         className="w-full py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
       >
         {loading ? "Saving..." : "Log Exercise"}

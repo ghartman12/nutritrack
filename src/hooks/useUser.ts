@@ -9,6 +9,8 @@ interface UserSettings {
   fatTarget: number;
   macroUnit: string;
   weightUnit: string;
+  waterUnit: string;
+  waterGoal: number;
   activityLevel: string;
   llmProvider: string;
   onboardingComplete: boolean;

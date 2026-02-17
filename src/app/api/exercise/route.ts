@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { activity, durationMinutes, estimatedCalories, isEstimate, notes } =
+    const { activity, durationMinutes, estimatedCalories, isEstimate, notes, date: dateStr } =
       body;
 
     const entry = await prisma.exerciseEntry.create({
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         estimatedCalories,
         isEstimate,
         notes,
+        ...(dateStr ? { date: new Date(dateStr + "T12:00:00") } : {}),
       },
     });
 

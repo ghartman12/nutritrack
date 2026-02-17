@@ -18,6 +18,9 @@ model User {
   weightEntries   WeightEntry[]
   digests         Digest[]
   streak          Streak?
+  customFoods     CustomFood[]
+  savedMeals      SavedMeal[]
+  waterEntries    WaterEntry[]
 }
 
 model UserSettings {
@@ -31,6 +34,8 @@ model UserSettings {
   macroUnit          String  @default("grams")
   weightUnit         String  @default("lbs")
   activityLevel      String  @default("moderate")
+  waterUnit          String  @default("oz")
+  waterGoal          Int     @default(64)
   llmProvider        String  @default("claude")
   onboardingComplete Boolean @default(false)
   welcomeMessage     String?
@@ -94,4 +99,53 @@ model Streak {
   currentStreak  Int       @default(0)
   longestStreak  Int       @default(0)
   lastLoggedDate DateTime?
+}
+
+model CustomFood {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  foodName    String
+  servingSize String   @default("1 serving")
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavedMeal {
+  id                 String          @id @default(cuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id])
+  name               String
+  items              SavedMealItem[]
+  lastLoggedAt       DateTime?
+  lastLoggedMealType String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model SavedMealItem {
+  id          String    @id @default(cuid())
+  savedMealId String
+  savedMeal   SavedMeal @relation(fields: [savedMealId], references: [id], onDelete: Cascade)
+  foodName    String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  quantity    Float     @default(1)
+}
+
+model WaterEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @default(now())
+  ounces    Int
+  createdAt DateTime @default(now())
 }

@@ -8,6 +8,8 @@ interface SettingsData {
   carbTarget: number;
   fatTarget: number;
   weightUnit: string;
+  waterUnit: string;
+  waterGoal: number;
   activityLevel: string;
   llmProvider: string;
 }
@@ -94,6 +96,35 @@ export default function SettingsForm({ initialData, onSave }: SettingsFormProps)
                 }`}
               >
                 {unit.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Water Unit</label>
+          <div className="flex gap-3">
+            {["oz", "mL"].map((unit) => (
+              <button
+                key={unit}
+                onClick={() => {
+                  const wasMetric = data.waterUnit === "mL";
+                  const willBeMetric = unit === "mL";
+                  update("waterUnit", unit);
+                  if (wasMetric !== willBeMetric) {
+                    const converted = willBeMetric
+                      ? Math.round(data.waterGoal * 29.5735)
+                      : Math.round(data.waterGoal / 29.5735);
+                    update("waterGoal", converted);
+                  }
+                }}
+                className={`flex-1 py-2.5 rounded-xl border-2 font-medium transition-colors ${
+                  data.waterUnit === unit
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
+              >
+                {unit}
               </button>
             ))}
           </div>

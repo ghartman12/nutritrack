@@ -17,21 +17,27 @@ function formatTime(dateStr: string): string {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-export default function WaterTab() {
-  const { user } = useUser();
+interface WaterTabProps {
+  date?: string;
+}
+
+export default function WaterTab({ date }: WaterTabProps) {
+  const { user, refetch } = useUser();
   const [entries, setEntries] = useState<WaterEntryData[]>([]);
   const [totalOunces, setTotalOunces] = useState(0);
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState("");
 
-  const todayDate = new Date().toISOString().split("T")[0];
+  const todayDate = date || new Date().toISOString().split("T")[0];
+  const isToday = todayDate === new Date().toISOString().split("T")[0];
   const waterUnit = user?.settings?.waterUnit || "oz";
   const isMetric = waterUnit === "mL";
-  const goal = isMetric ? 2000 : 64;
   const unit = isMetric ? "mL" : "oz";
+  const waterGoal = user?.settings?.waterGoal ?? (isMetric ? 2000 : 64);
 
-  const displayTotal = isMetric ? Math.round(totalOunces * OZ_TO_ML) : totalOunces;
   const displayAmount = (oz: number) => isMetric ? Math.round(oz * OZ_TO_ML) : oz;
 
   const fetchWater = useCallback(async () => {
@@ -85,20 +91,35 @@ export default function WaterTab() {
     setExpandedId(null);
   };
 
+  const handleEditGoal = () => {
+    setGoalInput(String(waterGoal));
+    setEditingGoal(true);
+  };
+
+  const handleSaveGoal = async () => {
+    const val = parseInt(goalInput) || 0;
+    const min = isMetric ? 600 : 20;
+    const max = isMetric ? 6000 : 200;
+    const clamped = Math.max(min, Math.min(max, val));
+    try {
+      await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ waterGoal: clamped }),
+      });
+      await refetch();
+    } catch { /* non-critical */ }
+    setEditingGoal(false);
+  };
+
   return (
     <div className="space-y-4">
-      <WaterWidget ounces={totalOunces} onUpdate={handleUpdate} waterUnit={waterUnit} loading={loading} />
-
-      <div className="text-center">
-        <span className="text-sm font-medium text-gray-700">
-          {displayTotal} / {goal} {unit} today
-        </span>
-      </div>
+      <WaterWidget ounces={totalOunces} onUpdate={handleUpdate} waterUnit={waterUnit} waterGoal={waterGoal} loading={loading} />
 
       {entries.length > 0 ? (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-3">
-            <h4 className="text-sm font-semibold text-gray-900">Today&apos;s Entries</h4>
+            <h4 className="text-sm font-semibold text-gray-900">{isToday ? "Today's" : "Day's"} Entries</h4>
             <span className="text-xs text-gray-400 ml-auto">{entries.length} entry{entries.length !== 1 ? "ies" : ""}</span>
           </div>
           <div className="space-y-1">
@@ -137,13 +158,53 @@ export default function WaterTab() {
         </div>
       ) : (
         <p className="text-xs text-center text-gray-400">
-          No water logged yet today. Use the buttons above to get started.
+          No water logged{isToday ? " yet today" : " for this day"}. Use the buttons above to get started.
         </p>
       )}
 
-      <p className="text-xs text-center text-gray-400">
-        Track your daily water intake. Aim for {isMetric ? "2000 mL" : "64 oz"} a day.
-      </p>
+      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+        {editingGoal ? (
+          <>
+            <span>Goal:</span>
+            <input
+              type="number"
+              value={goalInput}
+              onChange={(e) => setGoalInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveGoal();
+                if (e.key === "Escape") setEditingGoal(false);
+              }}
+              autoFocus
+              min={isMetric ? 600 : 20}
+              max={isMetric ? 6000 : 200}
+              className="w-16 rounded-lg border border-gray-300 px-2 py-1 text-center text-xs focus:border-sky-500 focus:outline-none"
+            />
+            <span>{unit}</span>
+            <button
+              onClick={handleSaveGoal}
+              className="text-sky-600 font-medium hover:text-sky-700"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditingGoal(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <span>Your goal: {waterGoal} {unit}</span>
+            <button
+              onClick={handleEditGoal}
+              className="text-sky-600 font-medium hover:text-sky-700"
+            >
+              Edit
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -62,10 +62,10 @@ export default function AboutYouStep({ data, onChange, onNext, onBack }: AboutYo
           type="number"
           min={weightMin}
           max={weightMax}
-          maxLength={4}
+          maxLength={3}
           value={data.weight || ""}
           onChange={(e) => {
-            const val = e.target.value.slice(0, 4);
+            const val = e.target.value.slice(0, 3);
             onChange("weight", parseInt(val) || 0);
             setError("");
           }}

@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       fiber,
       entryMethod,
       isEstimate,
+      date: dateStr,
     } = body;
 
     const entry = await prisma.foodEntry.create({
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
         fiber,
         entryMethod,
         isEstimate,
+        ...(dateStr ? { date: new Date(dateStr + "T12:00:00") } : {}),
       },
     });
 

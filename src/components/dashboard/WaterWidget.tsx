@@ -1,28 +1,26 @@
 "use client";
 import { useState } from "react";
-import ProgressBar from "@/components/ui/ProgressBar";
+import ProgressRing from "@/components/ui/ProgressRing";
 
-const OZ_GOAL = 64;
-const ML_GOAL = 2000;
-const OZ_MAX = 200;
-const ML_MAX = 6000;
 const OZ_TO_ML = 29.5735;
 
 interface WaterWidgetProps {
   ounces: number;
   onUpdate: (ounces: number) => void;
   waterUnit: string;
+  waterGoal?: number;
   loading?: boolean;
 }
 
-export default function WaterWidget({ ounces, onUpdate, waterUnit, loading }: WaterWidgetProps) {
+export default function WaterWidget({ ounces, onUpdate, waterUnit, waterGoal, loading }: WaterWidgetProps) {
   const [customAmount, setCustomAmount] = useState("");
   const isMetric = waterUnit === "mL";
-  const goal = isMetric ? ML_GOAL : OZ_GOAL;
-  const max = isMetric ? ML_MAX : OZ_MAX;
+  const goal = waterGoal ?? (isMetric ? 2000 : 64);
+  const max = goal * 3;
   const unit = isMetric ? "mL" : "oz";
 
   const displayValue = isMetric ? Math.round(ounces * OZ_TO_ML) : ounces;
+  const percent = goal > 0 ? Math.min(displayValue / goal, 1) : 0;
 
   const quickAmounts = isMetric ? [250, 500, 1000] : [8, 16, 32];
   const subtractAmount = isMetric ? 250 : 8;
@@ -47,19 +45,25 @@ export default function WaterWidget({ ounces, onUpdate, waterUnit, loading }: Wa
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Water</h3>
-        <span className="text-xs text-gray-500">{displayValue} / {goal} {unit}</span>
+      <h3 className="text-sm font-semibold text-gray-900 mb-4">Water</h3>
+
+      <div className="flex items-center justify-center mb-4">
+        <ProgressRing value={displayValue} max={goal} size={130} strokeWidth={12} color="#0ea5e9">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{displayValue}</div>
+            <div className="text-xs text-gray-500">/ {goal} {unit}</div>
+            {percent >= 1 && (
+              <div className="text-xs font-medium text-sky-500 mt-0.5">Goal met!</div>
+            )}
+          </div>
+        </ProgressRing>
       </div>
 
-      <ProgressBar
-        value={displayValue}
-        max={goal}
-        color="bg-sky-500"
-        showValue={false}
-      />
+      <div className="text-center text-xs text-gray-400 mb-4">
+        {Math.round(percent * 100)}% of daily goal
+      </div>
 
-      <div className="flex items-center justify-center gap-3 mt-4">
+      <div className="flex items-center justify-center gap-3">
         <button
           onClick={subtractOz}
           disabled={ounces <= 0 || loading}
