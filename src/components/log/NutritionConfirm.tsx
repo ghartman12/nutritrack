@@ -25,6 +25,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
   // Store the base (per-100g or per-serving) values from the original data
   const [base] = useState<NutritionEstimate>({ ...data });
   const [quantity, setQuantity] = useState(data.quantity ?? 1);
+  const [quantityInput, setQuantityInput] = useState(String(data.quantity ?? 1));
   const [manualOverrides, setManualOverrides] = useState<Partial<Record<string, number | string>>>({});
 
   // Weight-based input state
@@ -32,6 +33,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
   const servingSizeGrams = base.servingSizeGrams ?? 100;
   const [inputMode, setInputMode] = useState<InputMode>("servings");
   const [weightValue, setWeightValue] = useState(servingSizeGrams);
+  const [weightInput, setWeightInput] = useState(String(servingSizeGrams));
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("g");
 
   // Compute scale factor based on mode
@@ -70,6 +72,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
   };
 
   const handleQuantityChange = (val: string) => {
+    setQuantityInput(val);
     const q = parseFloat(val);
     if (!isNaN(q) && q > 0) {
       setQuantity(q);
@@ -78,6 +81,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
   };
 
   const handleWeightValueChange = (val: string) => {
+    setWeightInput(val);
     const w = parseFloat(val);
     if (!isNaN(w) && w > 0) {
       setWeightValue(w);
@@ -90,7 +94,9 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
     const currentGrams = weightValue * GRAMS_PER_UNIT[weightUnit];
     const converted = currentGrams / GRAMS_PER_UNIT[newUnit];
     setWeightUnit(newUnit);
-    setWeightValue(Math.round(converted * 100) / 100);
+    const rounded = Math.round(converted * 100) / 100;
+    setWeightValue(rounded);
+    setWeightInput(String(rounded));
     // No need to clear overrides — same physical weight = same macros
   };
 
@@ -100,9 +106,11 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
     if (mode === "weight") {
       // Default to one serving's weight in grams
       setWeightValue(servingSizeGrams);
+      setWeightInput(String(servingSizeGrams));
       setWeightUnit("g");
     } else {
       setQuantity(1);
+      setQuantityInput("1");
     }
   };
 
@@ -178,7 +186,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
             type="number"
             step="0.5"
             min="0.25"
-            value={quantity}
+            value={quantityInput}
             onChange={(e) => handleQuantityChange(e.target.value)}
           />
         )}
@@ -192,7 +200,7 @@ export default function NutritionConfirm({ data, onConfirm, onCancel, onBackToRe
                 type="number"
                 step="1"
                 min="1"
-                value={weightValue}
+                value={weightInput}
                 onChange={(e) => handleWeightValueChange(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
