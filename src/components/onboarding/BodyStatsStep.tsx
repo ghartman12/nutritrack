@@ -160,10 +160,10 @@ export default function BodyStatsStep({ data, onChange, onNext, onBack, onSkip }
                 type="number"
                 min={0}
                 max={11}
-                value={data.heightInches || ""}
+                value={data.heightInches === 0 ? "0" : data.heightInches || ""}
                 onChange={(e) => {
                   const val = e.target.value.slice(0, 2);
-                  onChange("heightInches", parseInt(val) || 0);
+                  onChange("heightInches", val === "" ? 0 : parseInt(val) || 0);
                   clearError("heightInches");
                 }}
                 placeholder="10"
